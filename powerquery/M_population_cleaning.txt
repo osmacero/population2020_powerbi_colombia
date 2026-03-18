@@ -1,0 +1,13 @@
+let
+    Origen = Csv.Document(File.Contents("C:\Users\oscar\OneDrive\Documentos\GitHub\population2020_powerbi_colombia\data\raw\population_by_country_2020.csv"),[Delimiter=",", Columns=11, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+    #"Encabezados promovidos" = Table.PromoteHeaders(Origen, [PromoteAllScalars=true]),
+    #"Tipo cambiado" = Table.TransformColumnTypes(#"Encabezados promovidos",{{"Country (or dependency)", type text}, {"Population (2020)", Int64.Type}, {"Yearly Change", Percentage.Type}, {"Net Change", Int64.Type}, {"Density (P/Km²)", Int64.Type}, {"Land Area (Km²)", Int64.Type}, {"Migrants (net)", Int64.Type}, {"Fert. Rate", Int64.Type}, {"Med. Age", Int64.Type}, {"Urban Pop %", type text}, {"World Share", Percentage.Type}}),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Tipo cambiado",{{"Country (or dependency)", "Country"}, {"Population (2020)", "Population_2020"}, {"Yearly Change", "YearlyChange_pct"}, {"Urban Pop %", "UrbanPop_pct"}, {"World Share", "WorldShare_pct"}}),
+    #"Tipo cambiado1" = Table.TransformColumnTypes(#"Columnas con nombre cambiado",{{"YearlyChange_pct", type number}}),
+    #"Errores reemplazados" = Table.ReplaceErrorValues(#"Tipo cambiado1", {{"Fert. Rate", 0}}),
+    #"Errores reemplazados1" = Table.ReplaceErrorValues(#"Errores reemplazados", {{"Med. Age", 0}}),
+    #"Tipo cambiado2" = Table.TransformColumnTypes(#"Errores reemplazados1",{{"Fert. Rate", type number}, {"Med. Age", Int64.Type}}),
+    #"Personalizada agregada" = Table.AddColumn(#"Tipo cambiado2", "IsColombia", each if [Country] = "Colombia" then true else false),
+    #"Columnas reordenadas" = Table.ReorderColumns(#"Personalizada agregada",{"IsColombia", "Country", "Population_2020", "YearlyChange_pct", "Net Change", "Density (P/Km²)", "Land Area (Km²)", "Migrants (net)", "Fert. Rate", "Med. Age", "UrbanPop_pct", "WorldShare_pct"})
+in
+    #"Columnas reordenadas"
